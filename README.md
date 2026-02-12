@@ -1,5 +1,10 @@
 # /codify
 
+[![Claude Code Skill](https://img.shields.io/badge/Claude_Code-Skill-8A2BE2)](https://github.com/anombyte93/codify)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/anombyte93/codify/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/anombyte93/codify)](https://github.com/anombyte93/codify/stargazers)
+[![GitHub last commit](https://img.shields.io/github/last-commit/anombyte93/codify)](https://github.com/anombyte93/codify/commits)
+
 > Refactor any Claude Code skill by extracting deterministic operations into a Python script.
 
 Every time a skill runs, the AI re-reads hundreds of lines of prose to re-derive mechanical operations: "does this file exist?", "run this regex", "copy with timestamp". This is wasteful. **codify** splits skills into two parts: code for mechanics, prompts for judgment.

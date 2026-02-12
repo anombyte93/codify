@@ -1,6 +1,8 @@
-# codify
+# /codify
 
-Refactor any Claude Code skill by extracting deterministic operations into a Python script. Reduces SKILL.md size by 60-80% while preserving all AI judgment.
+> Refactor any Claude Code skill by extracting deterministic operations into a Python script.
+
+Every time a skill runs, the AI re-reads hundreds of lines of prose to re-derive mechanical operations: "does this file exist?", "run this regex", "copy with timestamp". This is wasteful. **codify** splits skills into two parts: code for mechanics, prompts for judgment.
 
 ## Install
 
@@ -8,45 +10,86 @@ Refactor any Claude Code skill by extracting deterministic operations into a Pyt
 curl -fsSL https://raw.githubusercontent.com/anombyte93/codify/main/install.sh | bash
 ```
 
-This installs the skill to `~/.claude/skills/codify/`. Run the same command to upgrade.
+Installs to `~/.claude/skills/codify/`. Run the same command to upgrade.
 
-**Check for updates:**
 ```bash
+# Check for updates
 bash ~/.claude/skills/codify/install.sh --check-update
 ```
 
-## What It Does
+## Usage
 
-When you run `/codify` on a skill, it:
+```
+/codify <skill-name>
+```
 
-1. **Analyzes** the SKILL.md to identify deterministic vs judgment operations
-2. **Extracts** deterministic logic (file checks, regex validation, math, file I/O) into a `script.py`
-3. **Rewrites** SKILL.md to keep only AI judgment (questions, decisions, content generation)
-4. **Tests** every subcommand produces valid JSON
-5. **Verifies** the rewritten SKILL.md still contains all judgment content
+Where `<skill-name>` is the directory name under `~/.claude/skills/`.
 
-## Architecture Principle
+## How It Works
+
+### Phase 1: Analyze
+
+Reads the skill's SKILL.md and classifies every block:
+
+| Category | Goes to | Examples |
+|----------|---------|----------|
+| **Deterministic** | `script.py` | File existence checks, regex validation, math, template loading, file copying, JSON parsing |
+| **Judgment** | `SKILL.md` | User questions, decisions, content generation, quality assessment, continuation logic |
+
+### Phase 2: Build script.py
+
+Creates a Python script with argparse subcommands. Every subcommand:
+- Does one thing well
+- Outputs JSON to stdout
+- Responds to `--help`
+- Uses stdlib only (no dependencies)
+
+### Phase 3: Rewrite SKILL.md
+
+Replaces deterministic prose with script calls:
+
+```markdown
+# Before (in SKILL.md)
+Check if .taskmaster/ exists. If it does, look for PRD files
+in .taskmaster/docs/. Read tasks.json to count tasks...
+(~40 lines of detection logic)
+
+# After (in SKILL.md)
+python3 script.py preflight
+# Returns JSON: has_taskmaster, prd_path, task_count, ...
+```
+
+### Phase 4: Test & Backup
+
+- Runs `--help` on every subcommand
+- Runs read-only commands to verify JSON output
+- Saves original as `SKILL.md.pre-codify`
+
+## Real Results
+
+| Skill | SKILL.md Before | SKILL.md After | Reduction | script.py |
+|-------|----------------|----------------|-----------|-----------|
+| prd-taskmaster | 1,342 lines | 302 lines | **77.5%** | 1,079 lines (11 subcommands) |
+| start | 637 lines | 204 lines | **68.0%** | 320 lines (9 subcommands) |
+
+## Architecture
 
 ```
 script.py = AI's calculator and file manager (deterministic tools)
-SKILL.md  = AI's playbook for talking to user and making decisions (judgment)
+SKILL.md  = AI's playbook for user interaction and decisions (judgment)
 ```
 
-## Example
-
-Before codifying `prd-taskmaster`:
-- SKILL.md: 1,342 lines (AI re-derives validation logic every run)
-
-After:
-- SKILL.md: 302 lines (judgment only)
-- script.py: 1,079 lines (11 JSON-emitting subcommands)
-- **77.5% reduction** in what the AI needs to read per invocation
+The AI calls script.py like any other tool. Script returns structured JSON. AI interprets the results and makes decisions. Neither replaces the other.
 
 ## Requirements
 
-- Claude Code CLI
+- [Claude Code](https://claude.ai/code) CLI
 - Python 3.8+
 
 ## License
 
-MIT
+MIT - see [LICENSE](LICENSE)
+
+---
+
+Built by [Atlas AI](https://atlas-ai.au)

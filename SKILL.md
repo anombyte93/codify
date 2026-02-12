@@ -2,6 +2,14 @@
 name: codify
 description: "Refactor any skill by extracting deterministic operations into a Python script and slimming the SKILL.md to only AI judgment parts. Use when user says /codify, codify a skill, or optimize a skill."
 user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - AskUserQuestion
 ---
 
 # Codify Skill
@@ -105,7 +113,23 @@ Replace with script calls:
 - Inline bash snippets → replaced with script subcommand calls
 - Multi-step file operations → single script subcommand
 
-Add a Script Reference table at the bottom (like we did for /start).
+Preserve and update frontmatter:
+- Keep `name`, `description`, `user-invocable` unchanged
+- **Add `allowed-tools`** if missing — list tools the skill actually uses (Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, etc.)
+- Update `description` if the workflow changed significantly
+
+Add a Script Reference table at the bottom:
+
+```markdown
+## Script Reference
+
+All commands output JSON. Run from skill directory.
+
+| Command | Purpose |
+|---------|---------|
+| `subcommand-1 --flag` | What it does |
+| `subcommand-2 --flag` | What it does |
+```
 
 **Target**: Reduce SKILL.md by 50-70% while preserving all behavior.
 
